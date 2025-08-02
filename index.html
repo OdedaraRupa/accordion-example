@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Hardware Accordion</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: #f7f7f7;
+      }
+      .accordion-section {
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        background: #fff;
+        border-radius: 5px;
+      }
+      .accordion-header {
+        padding: 1rem;
+        background: #eee;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .accordion-header.disabled {
+        background: #ddd;
+        color: #888;
+        cursor: default;
+      }
+      .accordion-content {
+        display: none;
+        padding: 1rem;
+      }
+      .accordion-content.active {
+        display: block;
+      }
+      .option {
+        margin: 0.5rem 0;
+        cursor: pointer;
+        color: blue;
+        text-decoration: underline;
+      }
+      .option.disabled {
+        color: gray;
+        text-decoration: none;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="accordion">
+      <div class="accordion-section" data-step="system">
+        <div class="accordion-header">System</div>
+        <div class="accordion-content active">
+          <div class="option" data-caption="PC">PC</div>
+          <div class="option" data-caption="Mac">Mac</div>
+          <div class="option" data-caption="Android Phone">Android Phone</div>
+          <div class="option" data-caption="iPhone">iPhone</div>
+        </div>
+      </div>
+      <div class="accordion-section" data-step="gun">
+        <div class="accordion-header disabled">Gun</div>
+        <div class="accordion-content">
+          <div class="option" data-caption="Glock 19">Glock 19</div>
+          <div class="option" data-caption="AR 15">AR 15</div>
+          <div class="option" data-caption="SIRT pistol">SIRT pistol</div>
+          <div class="option" data-caption="Lightgun">Lightgun</div>
+          <div class="option" data-caption="Other">Other</div>
+        </div>
+      </div>
+      <div class="accordion-section" data-step="display">
+        <div class="accordion-header disabled">Display</div>
+        <div class="accordion-content">
+          <div class="option" data-caption="Projector">Projector</div>
+          <div class="option" data-caption="TV">TV</div>
+          <div class="option" data-caption="Computer Monitor">
+            Computer Monitor
+          </div>
+        </div>
+      </div>
+      <div class="accordion-section" data-step="hardware">
+        <div class="accordion-header disabled">Hardware Needed</div>
+        <div class="accordion-content">
+          <p>
+            This section will show hardware based on your previous selections.
+          </p>
+          <ul id="hardware-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const selections = {
+        system: null,
+        gun: null,
+        display: null,
+      };
+
+      const steps = ["system", "gun", "display", "hardware"];
+
+      const hardwareRules = {
+        system: {
+          Mac: ["Sinden Lightgun"],
+          "Android Phone": [
+            "Sinden Lightgun",
+            "Webcam A",
+            "Webcam B",
+            "Lighting to HDMI",
+          ],
+          iPhone: [
+            "Sinden Lightgun",
+            "Webcam A",
+            "Webcam B",
+            "Anker USB-C to HDMI",
+          ],
+          PC: ["Highwings HDMI", "Lightning Adapter", "USB C to HDMI"],
+        },
+        gun: {
+          "Glock 19": [
+            "Mantis Blackbeard X",
+            "Strikeman laser cartridge",
+            "SIRT pistol",
+            "Webcam A",
+            "Lightgun",
+          ],
+          "AR 15": [
+            "DryFireMag",
+            "Strikeman laser cartridge",
+            "SIRT pistol",
+            "Webcam A",
+            "Lightgun",
+          ],
+          "SIRT pistol": [
+            "DryFireMag",
+            "Mantis Blackbeard X",
+            "Strikeman laser cartridge",
+            "Webcam A",
+            "Lightgun",
+          ],
+          Lightgun: ["Everything except Lightgun"],
+          Other: ["Webcam A", "Lightgun", "SIRT pistol"],
+        },
+        display: {
+          Projector: ["Matte screen protector"],
+          "Computer Monitor": ["Matte screen protector"],
+        },
+      };
+
+      const headers = document.querySelectorAll(".accordion-header");
+
+      headers.forEach((header) => {
+        header.addEventListener("click", () => {
+          if (!header.classList.contains("disabled")) {
+            document
+              .querySelectorAll(".accordion-content")
+              .forEach((content) => content.classList.remove("active"));
+            const content = header.nextElementSibling;
+            content.classList.add("active");
+          }
+        });
+      });
+
+      function resetLaterSteps(fromStepIndex) {
+        for (let i = fromStepIndex + 1; i < steps.length; i++) {
+          selections[steps[i]] = null;
+          const section = document.querySelector(`[data-step="${steps[i]}"]`);
+          const header = section.querySelector(".accordion-header");
+          const content = section.querySelector(".accordion-content");
+          header.classList.add("disabled");
+          header.textContent =
+            steps[i].charAt(0).toUpperCase() + steps[i].slice(1);
+          content.classList.remove("active");
+        }
+      }
+
+      document.querySelectorAll(".option").forEach((option) => {
+        option.addEventListener("click", () => {
+          const section = option.closest(".accordion-section");
+          const step = section.getAttribute("data-step");
+          const caption = option.getAttribute("data-caption");
+
+          selections[step] = caption;
+          const header = section.querySelector(".accordion-header");
+          header.textContent = `${
+            step.charAt(0).toUpperCase() + step.slice(1)
+          }: ${caption}`;
+
+          const stepIndex = steps.indexOf(step);
+          resetLaterSteps(stepIndex);
+
+          if (steps[stepIndex + 1]) {
+            const nextSection = document.querySelector(
+              `[data-step="${steps[stepIndex + 1]}"]`
+            );
+            const nextHeader = nextSection.querySelector(".accordion-header");
+            nextHeader.classList.remove("disabled");
+            nextSection
+              .querySelector(".accordion-content")
+              .classList.add("active");
+          }
+
+          if (step === "display") {
+            // Determine what to hide based on rules
+            const hideItems = new Set();
+
+            Object.entries(
+              hardwareRules.system[selections.system] || {}
+            ).forEach((item) => hideItems.add(item));
+            Object.entries(hardwareRules.gun[selections.gun] || {}).forEach(
+              (item) => hideItems.add(item)
+            );
+            Object.entries(
+              hardwareRules.display[selections.display] || {}
+            ).forEach((item) => hideItems.add(item));
+
+            const hardwareList = document.getElementById("hardware-list");
+            hardwareList.innerHTML = "";
+
+            if (hideItems.size === 0) {
+              hardwareList.innerHTML =
+                "<li>No additional hardware hidden.</li>";
+            } else {
+              hideItems.forEach((item) => {
+                const li = document.createElement("li");
+                li.textContent = `Hide: ${item}`;
+                hardwareList.appendChild(li);
+              });
+            }
+
+            const hardwareHeader = document.querySelector(
+              '[data-step="hardware"] .accordion-header'
+            );
+            const hardwareContent = document.querySelector(
+              '[data-step="hardware"] .accordion-content'
+            );
+            hardwareHeader.classList.remove("disabled");
+            hardwareContent.classList.add("active");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
